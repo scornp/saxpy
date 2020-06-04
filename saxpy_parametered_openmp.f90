@@ -3,7 +3,7 @@ program saxpy
 ! setup type later real, double etc
 use utility
 !use omp_lib
-use omp_sub
+use omp_lib
 implicit none
 character*100                   :: run
 
