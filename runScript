@@ -1,0 +1,32 @@
+#!/bin/bash 
+
+runDir='/home/roger/Developer/20160801_saxpy'
+
+#runExe=( "saxpy_base_openmp_parametered_node" "saxpy_base_openmp_variabled_node")
+runExe=("fred") # "saxpy_base_variabled_openmp_node")
+#affinity=("scatter" "compact" "balanced")
+affinity=("scatter")
+
+numCores=("1" "2" "4" "8")
+
+##if -e outputAllRuns rm outputAllRuns
+
+outFile='output_compare.csv'
+/bin/rm -f ${outFile}
+/bin/touch ${outFile}
+echo ${outFile}
+echo "Program,		Number of Threads, 	Time,	GCalcs, GFlops" >> ${outFile}
+## now loop through the above arrays
+for runs in "${runExe[@]}"
+do
+	for num in "${numCores[@]}"
+	do 
+ 	   export OMP_NUM_THREADS="$num"
+ 	   echo -n $runs,	${KMP_AFFINITY},	${OMP_NUM_THREADS},	>> ${outFile}
+		#$runDir'/'$runs Control.dat | grep Wall | awk -F ' ' '{print $4 ", " $8 ", " $11}' >> ${outFile}
+
+		$runDir'/'$runs
+	done
+done
+
+
