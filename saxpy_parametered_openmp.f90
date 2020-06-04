@@ -24,7 +24,7 @@ real(kind=4)                    :: numCalcs
 real(kind=8)                    :: It, TA(2)
 
 integer                         :: FLOPSPERCALC 
-integer,parameter               :: MAXFLOPS_ITERS = 100000!000000
+integer, parameter              :: MAXFLOPS_ITERS = 100000!000000
 integer, parameter              :: LOOP_COUNT = 512
 integer, parameter              :: lotsOfRuns = 1 
 real                            :: tFlops = 1.0e12
