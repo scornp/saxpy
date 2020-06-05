@@ -8,7 +8,7 @@ implicit none
 character*100                   :: run
 
 ! allocate space for data
-integer(kind=8)			:: vecLength = 1000
+integer(kind=8)			:: maxVecLength = 1000
 real(kind=4), allocatable       :: y(:), x(:), b(:)
 real(kind=4)                    :: a
 
@@ -21,24 +21,21 @@ integer                         :: c1
  
 real(kind=4)                    :: numCalcs
 
-real(kind=8)                    :: It, TA(2)
-
 integer                         :: FLOPSPERCALC 
-integer, parameter              :: MAXFLOPS_ITERS = 100000!000000
-integer, parameter              :: LOOP_COUNT = 512
-integer, parameter              :: lotsOfRuns = 1 
+integer, parameter              :: vecLength = 512
+integer, parameter              :: numOfRuns = 100000 
 real                            :: tFlops = 1.0e12
 integer                         :: numthreads
 integer                         :: tid
 	      call getarg(0, run) 
           run = trim(adjustl(run))
 
-!          lotsOfRuns = 100
-!      MAXFLOPS_ITERS = 100000000
-!          LOOP_COUNT = 128
+!          numOfRuns = 100
+!          numOfRuns = 100000000
+!          vecLength = 128
 
 ! allocate space for the vetcors
-	allocate(y(vecLength), x(vecLength), b(vecLength))
+	allocate(y(maxVecLength), x(maxVecLength), b(maxVecLength))
 
 ! set data
 ! at some point need to check results
@@ -60,19 +57,17 @@ integer                         :: tid
 ! number of calculations
     
     FLOPSPERCALC = 2 
-        numCalcs = lotsOfRuns*FLOPSPERCALC*LOOP_COUNT*(MAXFLOPS_ITERS/tFlops)
+        numCalcs = numOfRuns*FLOPSPERCALC*vecLength*(numOfRuns/tFlops)
     
 !--------------------------------------------------------------------------
 
     call clockStartPoint(t1, c1) 
-      do i = 1, lotsOfRuns
-        do j = 1, MAXFLOPS_ITERS 
-!$omp parallel do schedule(guided)
-            do k = 1, LOOP_COUNT 
+      do i = 1, numOfRuns
+!$omp parallel do 
+            do k = 1, vecLength 
                 y(k) = a * x(k) + y(k)
             end do
 !$omp end parallel do
-	end do
       end do
     call calcTimeAndFlops(t1, c1, numCalcs, run) 
 

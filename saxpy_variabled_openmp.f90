@@ -21,68 +21,72 @@ integer                         :: c1
  
 real(kind=4)                    :: numCalcs
 
-real(kind=8)                    :: It, TA(2)
+integer                         :: flopsPerCalc 
 
-integer                         :: FLOPSPERCALC 
-!integer                         :: MAXFLOPS_ITERS = 100000000
-integer                         :: MAXFLOPS_ITERS = 10000000!000000
-integer                         :: LOOP_COUNT = 1536
-integer(kind=8)			:: vecLength = 4000
+integer                         :: vecLength = 512
+integer(kind=8)			:: maxVecLength = 4000
 
-integer                         :: lotsOfRuns = 1 
-real                            :: tFlops = 1.0e12
-integer                         :: numOfCores, offset, istart(1000), iStop(1000)
+integer                         :: numOfRuns = 100000 
+real                            :: gFlops = 1.0e9
+real   				:: wallTime
+integer                         :: numOfThreads, offset, istart(1000), iStop(1000)
 integer                         :: tid
 integer                         :: numOfBlocks, blockSize
+integer				:: numSubBlocks, subBlockSize
 integer                         :: iBegin, iEnd
 	      call getarg(0, run) 
           run = trim(adjustl(run))
 
-!          lotsOfRuns = 100
-!      MAXFLOPS_ITERS = 100000000
-!          LOOP_COUNT = 128
+!          numOfRuns = 100
+!          numOfRuns = 100000000
+!          vecLength = 128
 
 ! number of calculations
 
 !$omp parallel
     !$omp master
-	numOfCores = omp_get_num_threads()
-    write(6, *) " number of cores = ", numOfCores
+	numOfThreads = omp_get_num_threads()
+!   write(6, *) numOfThreads
     !$omp end master 
 !$omp end parallel
 
-         blockSize = 16
-       numOfBlocks = numOfCores
+! the max number of threads is 8 on aarch64
+! need to create vectors of sya 
 
-	LOOP_COUNT = blockSize*numOfCores
+         blockSize = vecLength/numOfThreads ! assume 4 lanes
+       numOfBlocks = numOfThreads
+
+      subBlockSize = 4
+      numSubBlocks = blockSize/subBlockSize
+
+!	write(6, *) numSubBlocks, subBlockSize	
 
 ! allocate space for the vetcors
-	allocate(y(LOOP_COUNT), x(LOOP_COUNT))
+	allocate(y(vecLength), x(vecLength))
 
 ! set data
 ! at some point need to check results
 
-	call random_seed()
-	call random_number(x)
- 	call random_number(y) 
+!	call random_seed()
+!	call random_number(x)
+!	call random_number(y) 
 		a = 1.0
 		x = 1.0
 		y = 1.0
     
-     FLOPSPERCALC = 2 
-         numCalcs = FLOPSPERCALC*LOOP_COUNT*(MAXFLOPS_ITERS/tFlops)
+     flopsPerCalc = 2 
+         numCalcs = flopsPerCalc*vecLength*(numOfRuns/gFlops)
     
 !--------------------------------------------------------------------------
-    write(6, *) " number of cores = ", numOfCores
 
-       do i = 1, numOfCores
+       do i = 1, numOfThreads
         istart(i) = 1 + (i - 1)*blockSize
          iStop(i) = istart(i) + blockSize - 1         
        end do
        
 !!$omp master
-!    do i = 1, numOfCores
-!     write(6, '(4(a15, i4))') " numOfCores  ", i, &
+!    do i = 1, numOfThreads
+!     write(6, '(4(a15, i4))') " numOfThreads  ", i, &
 !           & " istart  ", istart(i),              &
 !           & " iend  ", iStop(i),                 &
 !           & " size  ", (iStop(i) - istart(i)) + 1
@@ -104,19 +108,24 @@ integer                         :: iBegin, iEnd
 
 !	write(6, *) tid, iBegin, iEnd
 
-        do j = 1, MAXFLOPS_ITERS 
+      do i = 1, numOfRuns
 !!dir$ simd
-!                y(iBegin:iEnd) = a * x(iBegin:iEnd) + y(iBegin:iEnd)                
-           do i = iBegin, iEnd
-             y(i) = a * x(i) + y(i)
+!                y(iBegin:iEnd) = a * x(iBegin:iEnd) + y(iBegin:iEnd) 
+!dir$ simd               
+           do k = iBegin, iEnd, subBlockSize
+             y(k:k + subBlockSize - 1) = a * x(k+ subBlockSize - 1) + y(k + subBlockSize - 1)
            end do
-         end do
-!     end do
+     end do
 !$omp end parallel
      
-    call calcTimeAndFlops(t1, c1, numCalcs, run) 
+    call calcTimeAndFlops(t1, c1, wallTime) 
 
-    write(6, *) "Sanity check sum is: ", sum(y)
+    write(6, '(a12, i2, a11, f8.6, a11, f8.6, a11, f8.6, a11, f12.1)')	&				
+              & " Threads   ", numOfThreads,     			&
+              & " Wall time ", wallTime,             			&
+              & " numCalcs  ", numCalcs,             			& 
+              & " Gflops    ", numCalcs/wallTime,   			&
+              & " Check sum ", sum(y)
 
     deallocate(y, x)
 end program saxpy

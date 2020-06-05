@@ -16,12 +16,13 @@ contains
     return
     end subroutine clockStartPoint
 
-    subroutine calcTimeAndFlops(t1, c1, numCalcs, method) 
+    subroutine calcTimeAndFlops(t1, c1, sysClockTime) 
     real, intent(in)             :: t1
     integer, intent(in)          :: c1
-    real(kind=4), intent(in)  :: numCalcs
-    character*(*), intent(in)    :: method
-    real                         :: sysClockTime, Flops
+!    real(kind=4), intent(in)     :: numCalcs
+!    character*(*), intent(in)    :: method
+    real, intent(out)            :: sysClockTime
+!    real, intent(out)            :: sysClockTime, Flops
     real                         :: t2
     integer                      :: c2
     real                         :: rate 
@@ -35,13 +36,13 @@ contains
     call system_clock(c2)
  
     sysClockTime = (c2 - c1)/rate
-           Flops = numCalcs/sysClockTime
+!          Flops = numCalcs/sysClockTime
 	!Flops = numCalcs/(t2 - t1)
-    write(6,'(a10, a80)')   " Method    : ", trim(adjustl(method))
-    write(6,'(a10, e12.3)') " Wall_time : ", sysClockTime
-    write(6,'(a10, e12.3)') " TFlops     : ", Flops
-    write(6,'(a10, e12.3)') " cpu_time  : ", t2 - t1 
-    write(6,'(a10, e12.3)') " rate      : ", rate
+!    write(6,'(a10, a80)')   " Method    : ", trim(adjustl(method))
+!    write(6,'(a10, e12.3)') " Wall_time : ", sysClockTime
+!    write(6,'(a10, e12.3)') " TFlops    : ", Flops
+!    write(6,'(a10, e12.3)') " cpu_time  : ", t2 - t1 
+!    write(6,'(a10, e12.3)') " rate      : ", rate
     return
     end subroutine calcTimeAndFlops 
 
