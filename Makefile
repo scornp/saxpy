@@ -7,41 +7,42 @@ STEMU = utility
 SRCU  = ${STEMU:=.f90}
 OBJU  = ${STEMU:=.o}
 
-STEMP = saxpy_parametered_openmp 
-SRCP  = ${STEMP:=.f90}
-OBJP  = ${STEMP:=.o}
-EXEP  = ${STEMP} # saxpy parametered_openmp
+STEMB = saxpy_baseline
+SRCB  = ${STEMB:=.f90}
+OBJB  = ${STEMB:=.o}
+EXEB  = ${STEMB} # saxpy_baseline_openmp
 
 STEMV = saxpy_variabled_openmp 
 SRCV  = ${STEMV:=.f90}
 OBJV  = ${STEMV:=.o}
 EXEV  = ${STEMV} # saxpy_variabled_openmp
 
-F90 = gfortran
+#F90 = gfortran
+F90 = tau_f90.sh
 
 RPT = #-qopt-report=3 -qopt-report-file=$@.optrpt
 
-OPT = -O3 -g -fopenmp #-xHost -fcode-asm -Fa$@.s #-check bounds
+OPT =  -O3 -fopenmp #-xHost -fcode-asm -Fa$@.s #-check bounds
 
 .f90.o:
 	${F90} ${OPT} ${RPT} -c $< -o $@
 
 
-all: ${EXEV} # ${EXEP}
+all: ${EXEV} ${EXEB}
 
-${OBJP} : ${OBJU}
+${OBJB} : ${OBJU}
 
 ${OBJV} : ${OBJU}
 
-${EXEP} : ${OBJP}
-	@echo building ${EXEP}:
-	${F90} ${OPT} ${RPT} -o $@ ${OBJP} ${OBJU}
+${EXEB} : ${OBJB}
+	@echo building ${EXEB}:
+	${F90} ${OPT} ${RPT} -o $@ ${OBJB} ${OBJU}
 
 ${EXEV} : ${OBJV}
 	@echo building ${EXEV}:
 	${F90} ${OPT} ${RPT} -o $@ ${OBJV} ${OBJU}
 
 clean:
-	rm -f ${EXEV}  ${EXEP} *.o *.mod *.optrpt *.s
+	rm -f ${EXEV}  ${EXEB} *.o *.mod *.optrpt *.s
 
 

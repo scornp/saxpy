@@ -52,7 +52,7 @@ integer                         :: iBegin, iEnd
 
 ! the max number of threads is 8 on aarch64
 ! need to create vectors of sya 
-
+	 vecLength = vecLength*8
          blockSize = vecLength/numOfThreads ! assume 4 lanes
        numOfBlocks = numOfThreads
 
@@ -75,9 +75,9 @@ integer                         :: iBegin, iEnd
 		y = 1.0
     
      flopsPerCalc = 2 
-         numCalcs = flopsPerCalc*vecLength*(numOfRuns/gFlops)
-    
-!--------------------------------------------------------------------------
+         numCalcs = flopsPerCalc*vecLength*numOfRuns
+
+!-------------------------------------------------------------------------
 
        do i = 1, numOfThreads
         istart(i) = 1 + (i - 1)*blockSize
@@ -111,20 +111,20 @@ integer                         :: iBegin, iEnd
       do i = 1, numOfRuns
 !!dir$ simd
 !                y(iBegin:iEnd) = a * x(iBegin:iEnd) + y(iBegin:iEnd) 
-!dir$ simd               
+!!dir$ simd               
            do k = iBegin, iEnd, subBlockSize
-             y(k:k + subBlockSize - 1) = a * x(k+ subBlockSize - 1) + y(k + subBlockSize - 1)
+             y(k:k + subBlockSize - 1) = a * x(k:k+ subBlockSize - 1) + y(k:k + subBlockSize - 1)
            end do
      end do
 !$omp end parallel
      
     call calcTimeAndFlops(t1, c1, wallTime) 
 
-    write(6, '(a12, i2, a11, f8.6, a11, f8.6, a11, f8.6, a11, f12.1)')	&				
+    write(6, '(a12, i2, a11, f8.6, a11, f12.0, a11, f8.6, a11, f12.1)')	&				
               & " Threads   ", numOfThreads,     			&
               & " Wall time ", wallTime,             			&
               & " numCalcs  ", numCalcs,             			& 
-              & " Gflops    ", numCalcs/wallTime,   			&
+              & " GFlops    ", numCalcs/wallTime/gFlops,   			&
               & " Check sum ", sum(y)
 
     deallocate(y, x)
